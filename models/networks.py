@@ -5,10 +5,11 @@ import functools
 from torch.autograd import Variable
 from torch.optim import lr_scheduler
 import numpy as np
+
+
 ###############################################################################
 # Functions
 ###############################################################################
-
 
 
 def weights_init_normal(m):
@@ -87,11 +88,12 @@ def get_norm_layer(norm_type='instance'):
 
 def get_scheduler(optimizer, opt, lr=-1):
     if lr == -1:
-	lr = opt.lr
+        lr = opt.lr
     if opt.lr_policy == 'lambda':
         def lambda_rule(epoch):
-            lr_l = (1.0 - max(0, epoch - opt.niter) / float(opt.niter_decay+1))
+            lr_l = (1.0 - max(0, epoch - opt.niter) / float(opt.niter_decay + 1))
             return lr_l
+
         scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda_rule)
     elif opt.lr_policy == 'step':
         scheduler = lr_scheduler.StepLR(optimizer, step_size=opt.lr_decay_iters, gamma=0.1)
@@ -102,31 +104,37 @@ def get_scheduler(optimizer, opt, lr=-1):
     return scheduler
 
 
-def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, init_type='normal', gpu_ids=[]):
+def define_G(input_nc, output_nc, ngf, which_model_netG, norm='batch', use_dropout=False, init_type='normal',
+             gpu_ids=[]):
     netG = None
     use_gpu = len(gpu_ids) > 0
     norm_layer = get_norm_layer(norm_type=norm)
 
     if use_gpu:
-        assert(torch.cuda.is_available())
-
+        assert (torch.cuda.is_available())
 
     if which_model_netG == 'unetMM':
-        netG = UnetGeneratorMMU(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, 
-use_dropout=use_dropout,  gpu_ids=gpu_ids)
-	
+        netG = UnetGeneratorMMU(input_nc, output_nc, 8, ngf, norm_layer=norm_layer,
+                                use_dropout=use_dropout, gpu_ids=gpu_ids)
+
     elif which_model_netG == 'resnetMM':
-        netG = ResnetGeneratorMM(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, gpu_ids=gpu_ids)
+        netG = ResnetGeneratorMM(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9,
+                                 gpu_ids=gpu_ids)
     elif which_model_netG == 'resnetMMReverse':
-        netG = ResnetGeneratorMMReverse( output_nc, input_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, gpu_ids=gpu_ids)
+        netG = ResnetGeneratorMMReverse(output_nc, input_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout,
+                                        n_blocks=9, gpu_ids=gpu_ids)
     elif which_model_netG == 'resnet_9blocks':
-        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9, gpu_ids=gpu_ids)
+        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=9,
+                               gpu_ids=gpu_ids)
     elif which_model_netG == 'resnet_6blocks':
-        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6, gpu_ids=gpu_ids)
+        netG = ResnetGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout, n_blocks=6,
+                               gpu_ids=gpu_ids)
     elif which_model_netG == 'unet_128':
-        netG = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout, gpu_ids=gpu_ids)
+        netG = UnetGenerator(input_nc, output_nc, 7, ngf, norm_layer=norm_layer, use_dropout=use_dropout,
+                             gpu_ids=gpu_ids)
     elif which_model_netG == 'unet_256':
-        netG = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout, gpu_ids=gpu_ids)
+        netG = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout,
+                             gpu_ids=gpu_ids)
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % which_model_netG)
     if len(gpu_ids) > 0:
@@ -142,11 +150,13 @@ def define_D(input_nc, ndf, which_model_netD,
     norm_layer = get_norm_layer(norm_type=norm)
 
     if use_gpu:
-        assert(torch.cuda.is_available())
+        assert (torch.cuda.is_available())
     if which_model_netD == 'basic':
-        netD = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
+        netD = NLayerDiscriminator(input_nc, ndf, n_layers=3, norm_layer=norm_layer, use_sigmoid=use_sigmoid,
+                                   gpu_ids=gpu_ids)
     elif which_model_netD == 'n_layers':
-        netD = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer, use_sigmoid=use_sigmoid, gpu_ids=gpu_ids)
+        netD = NLayerDiscriminator(input_nc, ndf, n_layers_D, norm_layer=norm_layer, use_sigmoid=use_sigmoid,
+                                   gpu_ids=gpu_ids)
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' %
                                   which_model_netD)
@@ -215,8 +225,9 @@ class GANLoss(nn.Module):
 # Code and idea originally from Justin Johnson's architecture.
 # https://github.com/jcjohnson/fast-neural-style/
 class ResnetGenerator(nn.Module):
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, gpu_ids=[], padding_type='reflect'):
-        assert(n_blocks >= 0)
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6,
+                 gpu_ids=[], padding_type='reflect'):
+        assert (n_blocks >= 0)
         super(ResnetGenerator, self).__init__()
         self.input_nc = input_nc
         self.output_nc = output_nc
@@ -235,18 +246,19 @@ class ResnetGenerator(nn.Module):
 
         n_downsampling = 2
         for i in range(n_downsampling):
-            mult = 2**i
+            mult = 2 ** i
             model += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3,
                                 stride=2, padding=1, bias=use_bias),
                       norm_layer(ngf * mult * 2),
                       nn.ReLU(True)]
 
-        mult = 2**n_downsampling
+        mult = 2 ** n_downsampling
         for i in range(n_blocks):
-            model += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
+            model += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout,
+                                  use_bias=use_bias)]
 
         for i in range(n_downsampling):
-            mult = 2**(n_downsampling - i)
+            mult = 2 ** (n_downsampling - i)
             model += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
                                          kernel_size=3, stride=2,
                                          padding=1, output_padding=1,
@@ -267,8 +279,9 @@ class ResnetGenerator(nn.Module):
 
 
 class ResnetGeneratorMMReverse(nn.Module):
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, gpu_ids=[], padding_type='reflect'):
-        assert(n_blocks >= 0)
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6,
+                 gpu_ids=[], padding_type='reflect'):
+        assert (n_blocks >= 0)
         super(ResnetGeneratorMMReverse, self).__init__()
         self.input_nc = input_nc
         self.output_nc = output_nc
@@ -286,77 +299,79 @@ class ResnetGeneratorMMReverse(nn.Module):
                  norm_layer(ngf),
                  nn.ReLU(True)]
 
-
         n_downsampling = 2
         for i in range(n_downsampling):
-            mult = 2**i
+            mult = 2 ** i
             model += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3,
                                 stride=2, padding=1, bias=use_bias),
                       norm_layer(ngf * mult * 2),
                       nn.ReLU(True)]
 
         pre_f_blocks = 4
-	pre_l_blocks = 7
-        mult = 2**n_downsampling
+        pre_l_blocks = 7
+        mult = 2 ** n_downsampling
 
         for i in range(pre_f_blocks):
-            model += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
-	model_pre = []
-	for i in range(pre_f_blocks,pre_l_blocks):
-            model_pre += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
-	
+            model += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout,
+                                  use_bias=use_bias)]
+        model_pre = []
+        for i in range(pre_f_blocks, pre_l_blocks):
+            model_pre += [
+                ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout,
+                            use_bias=use_bias)]
 
-	model_post1 = []
-	model_post2 = []
-	for i in range(pre_l_blocks,n_blocks):
-            model_post1 += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
-	    model_post2 += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
-
+        model_post1 = []
+        model_post2 = []
+        for i in range(pre_l_blocks, n_blocks):
+            model_post1 += [
+                ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout,
+                            use_bias=use_bias)]
+            model_post2 += [
+                ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout,
+                            use_bias=use_bias)]
 
         for i in range(n_downsampling):
-            mult = 2**(n_downsampling - i)
+            mult = 2 ** (n_downsampling - i)
             model_post1 += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
-                                         kernel_size=3, stride=2,
-                                         padding=1, output_padding=1,
-                                         bias=use_bias),
-                      norm_layer(int(ngf * mult / 2)),
-                      nn.ReLU(True)]
+                                               kernel_size=3, stride=2,
+                                               padding=1, output_padding=1,
+                                               bias=use_bias),
+                            norm_layer(int(ngf * mult / 2)),
+                            nn.ReLU(True)]
 
             model_post2 += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
-                                         kernel_size=3, stride=2,
-                                         padding=1, output_padding=1,
-                                         bias=use_bias),
-                      norm_layer(int(ngf * mult / 2)),
-                      nn.ReLU(True)]
-
+                                               kernel_size=3, stride=2,
+                                               padding=1, output_padding=1,
+                                               bias=use_bias),
+                            norm_layer(int(ngf * mult / 2)),
+                            nn.ReLU(True)]
 
         model_post1 += [nn.ReflectionPad2d(3)]
         model_post1 += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
         model_post1 += [nn.Tanh()]
 
-
         model_post2 += [nn.ReflectionPad2d(3)]
         model_post2 += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
         model_post2 += [nn.Tanh()]
 
-	self.model_post1 = nn.Sequential(*model_post1)
-	self.model_post2 = nn.Sequential(*model_post2)
+        self.model_post1 = nn.Sequential(*model_post1)
+        self.model_post2 = nn.Sequential(*model_post2)
         self.model_pre = nn.Sequential(*model_pre)
         self.model = nn.Sequential(*model)
 
     def forward(self, input):
-	 
-	    latent = self.model(input)
-	    fuse_ip = self.model_pre(latent)
-	    out1 = self.model_post1(fuse_ip) 
-	    out2 = self.model_post2(fuse_ip)
-            return out1, out2, latent
 
+        latent = self.model(input)
+        fuse_ip = self.model_pre(latent)
+        out1 = self.model_post1(fuse_ip)
+        out2 = self.model_post2(fuse_ip)
+        return out1, out2, latent
 
 
 class ResnetGeneratorMM(nn.Module):
-    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, gpu_ids=[], padding_type='reflect'):
-        assert(n_blocks >= 0)
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6,
+                 gpu_ids=[], padding_type='reflect'):
+        assert (n_blocks >= 0)
         super(ResnetGeneratorMM, self).__init__()
         self.input_nc = input_nc
         self.output_nc = output_nc
@@ -368,90 +383,92 @@ class ResnetGeneratorMM(nn.Module):
             use_bias = norm_layer == nn.InstanceNorm2d
         model1 = [nn.ReflectionPad2d(3),
 
-                 nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0,
-                           bias=use_bias),
-                 norm_layer(ngf),
-                 nn.ReLU(True)]
+                  nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0,
+                            bias=use_bias),
+                  norm_layer(ngf),
+                  nn.ReLU(True)]
 
         model2 = [nn.ReflectionPad2d(3),
-                 nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0,
-                           bias=use_bias),
-                 norm_layer(ngf),
-                 nn.ReLU(True)]
-
+                  nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0,
+                            bias=use_bias),
+                  norm_layer(ngf),
+                  nn.ReLU(True)]
 
         n_downsampling = 2
         for i in range(n_downsampling):
-            mult = 2**i
+            mult = 2 ** i
             model1 += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3,
-                                stride=2, padding=1, bias=use_bias),
-                      norm_layer(ngf * mult * 2),
-                      nn.ReLU(True)]
-
-	    model2 += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3,
-                                stride=2, padding=1, bias=use_bias),
-                      norm_layer(ngf * mult * 2),
-                      nn.ReLU(True)]
-	
-
-        pre_f_blocks = 4
-	pre_l_blocks = 7
-        mult = 2**n_downsampling
-
-        for i in range(pre_f_blocks):
-            model1 += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
-	    model2 += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
-	model_pre = []
-	model_post = []
-	for i in range(pre_f_blocks,pre_l_blocks):
-            model_pre += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
-	
-	for i in range(pre_l_blocks,n_blocks):
-            model_post += [ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout, use_bias=use_bias)]
-
-
-	model_fusion = []
- 	#p = 0
-        #if padding_type == 'reflect':
-        #    model_fusion += [nn.ReflectionPad2d(1)]
-        #elif padding_type == 'replicate':
-        #    model_fusion += [nn.ReplicationPad2d(1)]
-        #elif padding_type == 'zero':
-        #    p = 1
-        #else:
-        #    raise NotImplementedError('padding [%s] is not implemented' % padding_type)
-
-        model_fusion = [nn.Conv2d(ngf * mult *2, ngf * mult , kernel_size=3, padding=1, bias=use_bias),
-                       norm_layer(ngf * mult),
+                                 stride=2, padding=1, bias=use_bias),
+                       norm_layer(ngf * mult * 2),
                        nn.ReLU(True)]
 
-	model = []
+            model2 += [nn.Conv2d(ngf * mult, ngf * mult * 2, kernel_size=3,
+                                 stride=2, padding=1, bias=use_bias),
+                       norm_layer(ngf * mult * 2),
+                       nn.ReLU(True)]
+
+        pre_f_blocks = 4
+        pre_l_blocks = 7
+        mult = 2 ** n_downsampling
+
+        for i in range(pre_f_blocks):
+            model1 += [
+                ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout,
+                            use_bias=use_bias)]
+            model2 += [
+                ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout,
+                            use_bias=use_bias)]
+        model_pre = []
+        model_post = []
+        for i in range(pre_f_blocks, pre_l_blocks):
+            model_pre += [
+                ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout,
+                            use_bias=use_bias)]
+
+        for i in range(pre_l_blocks, n_blocks):
+            model_post += [
+                ResnetBlock(ngf * mult, padding_type=padding_type, norm_layer=norm_layer, use_dropout=use_dropout,
+                            use_bias=use_bias)]
+
+        model_fusion = []
+        # p = 0
+        # if padding_type == 'reflect':
+        #    model_fusion += [nn.ReflectionPad2d(1)]
+        # elif padding_type == 'replicate':
+        #    model_fusion += [nn.ReplicationPad2d(1)]
+        # elif padding_type == 'zero':
+        #    p = 1
+        # else:
+        #    raise NotImplementedError('padding [%s] is not implemented' % padding_type)
+
+        model_fusion = [nn.Conv2d(ngf * mult * 2, ngf * mult, kernel_size=3, padding=1, bias=use_bias),
+                        norm_layer(ngf * mult),
+                        nn.ReLU(True)]
+
+        model = []
         for i in range(n_downsampling):
-            mult = 2**(n_downsampling - i)
+            mult = 2 ** (n_downsampling - i)
             model_post += [nn.ConvTranspose2d(ngf * mult, int(ngf * mult / 2),
-                                         kernel_size=3, stride=2,
-                                         padding=1, output_padding=1,
-                                         bias=use_bias),
-                      norm_layer(int(ngf * mult / 2)),
-                      nn.ReLU(True)]
+                                              kernel_size=3, stride=2,
+                                              padding=1, output_padding=1,
+                                              bias=use_bias),
+                           norm_layer(int(ngf * mult / 2)),
+                           nn.ReLU(True)]
         model_post += [nn.ReflectionPad2d(3)]
         model_post += [nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0)]
         model_post += [nn.Tanh()]
-	self.model1 = nn.Sequential(*model1)
-	self.model2 = nn.Sequential(*model2)
+        self.model1 = nn.Sequential(*model1)
+        self.model2 = nn.Sequential(*model2)
         self.model_pre = nn.Sequential(*model_pre)
         self.model_post = nn.Sequential(*model_post)
-	self.model_fusion = nn.Sequential(*model_fusion)
+        self.model_fusion = nn.Sequential(*model_fusion)
 
-    def forward(self, input,input2):
-            m1=self.model1(input)
-	    m2 = self.model2(input2)
-	    latent = 	self.model_pre(self.model_fusion(torch.cat([m1, m2], dim =1 )))
-	    out = self.model_post(latent)
-            return out, latent
-
-
-
+    def forward(self, input, input2):
+        m1 = self.model1(input)
+        m2 = self.model2(input2)
+        latent = self.model_pre(self.model_fusion(torch.cat([m1, m2], dim=1)))
+        out = self.model_post(latent)
+        return out, latent
 
 
 # Define a resnet block
@@ -508,13 +525,18 @@ class UnetGenerator(nn.Module):
         self.gpu_ids = gpu_ids
 
         # construct unet structure
-        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)
+        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer,
+                                             innermost=True)
         for i in range(num_downs - 5):
-            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)
-        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block,
+                                                 norm_layer=norm_layer, use_dropout=use_dropout)
+        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block,
+                                             norm_layer=norm_layer)
+        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block,
+                                             norm_layer=norm_layer)
         unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True, norm_layer=norm_layer)
+        unet_block = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, outermost=True,
+                                             norm_layer=norm_layer)
 
         self.model = unet_block
 
@@ -532,18 +554,23 @@ class UnetGeneratorMM(nn.Module):
         self.gpu_ids = gpu_ids
 
         # construct unet structure
-        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)
+        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer,
+                                             innermost=True)
         for i in range(num_downs - 5):
-            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)
-        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block,
+                                                 norm_layer=norm_layer, use_dropout=use_dropout)
+        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block,
+                                             norm_layer=norm_layer)
+        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block,
+                                             norm_layer=norm_layer)
         unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, norm_layer=norm_layer, outermost=True)
+        unet_block = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block,
+                                             norm_layer=norm_layer, outermost=True)
 
         self.model = unet_block
 
     def forward(self, input, input2):
-            return self.model(input)
+        return self.model(input)
 
 
 class UnetGeneratorMMU(nn.Module):
@@ -552,202 +579,197 @@ class UnetGeneratorMMU(nn.Module):
         super(UnetGeneratorMMU, self).__init__()
         self.gpu_ids = gpu_ids
 
-	'''self.en1 = EnLayerBi(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True) #128
-	self.t11 = TransLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True, factor=2)
-	self.t12 = TransLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True, factor=2)
-	self.en2 = EnLayerBi(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer) #64
-	self.t21 = TransLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer, factor=2)
-	self.t22 = TransLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer, factor=2)		
-	self.en3 = EnLayerBi(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer) #32
-	self.t31 = TransLayer(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor=2)
-	self.t32 = TransLayer(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor=2)
-	self.en4 = EnLayerBi(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer,  factor=2)#16
-	self.t41 = TransLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer, factor=2)
-	self.t42 = TransLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer, factor=2)
-	self.en5 = EnLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout) #8
-	self.t5 = TransLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout)
-	self.en6 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) #4
-	self.t6 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) 
-	self.en7 = EnLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer) #2
-	self.t7 = TransLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer)
-	self.en8 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True) #1
-	self.t8 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True)
-	self.de8 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True) #2
-	self.de7 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) #4
-	self.de6 = DeLayer(ngf * 8, ngf * 8, input_nc=None,norm_layer=norm_layer) #8
-	self.de5 = DeLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout) #16
-	self.de4 = DeLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer) #32
-	self.de3 = DeLayer(ngf * 2, ngf * 4, input_nc=None,  norm_layer=norm_layer) #64
-	self.de2 = DeLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer) #128
-	self.de1 = DeLayer(output_nc, ngf, input_nc=input_nc,  norm_layer=norm_layer, outermost=True) # 256
-	
+        '''self.en1 = EnLayerBi(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True) #128
+        self.t11 = TransLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True, factor=2)
+        self.t12 = TransLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True, factor=2)
+        self.en2 = EnLayerBi(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer) #64
+        self.t21 = TransLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer, factor=2)
+        self.t22 = TransLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer, factor=2)		
+        self.en3 = EnLayerBi(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer) #32
+        self.t31 = TransLayer(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor=2)
+        self.t32 = TransLayer(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor=2)
+        self.en4 = EnLayerBi(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer,  factor=2)#16
+        self.t41 = TransLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer, factor=2)
+        self.t42 = TransLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer, factor=2)
+        self.en5 = EnLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout) #8
+        self.t5 = TransLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout)
+        self.en6 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) #4
+        self.t6 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) 
+        self.en7 = EnLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer) #2
+        self.t7 = TransLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer)
+        self.en8 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True) #1
+        self.t8 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True)
+        self.de8 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True) #2
+        self.de7 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) #4
+        self.de6 = DeLayer(ngf * 8, ngf * 8, input_nc=None,norm_layer=norm_layer) #8
+        self.de5 = DeLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout) #16
+        self.de4 = DeLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer) #32
+        self.de3 = DeLayer(ngf * 2, ngf * 4, input_nc=None,  norm_layer=norm_layer) #64
+        self.de2 = DeLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer) #128
+        self.de1 = DeLayer(output_nc, ngf, input_nc=input_nc,  norm_layer=norm_layer, outermost=True) # 256
+        
+    
+        def forward(self, input, input2):
+             oe11, oe12 = self.en1(input, input2)  #128 te2 	 
+            te21, te22, oe21, oe22 = self.en2(oe11,oe12) 
+            te31, te32, oe31, oe32 = self.en3(oe21, oe22) 
+            te41, te42, oe41, oe42 = self.en4(oe31, oe32)  
+            te5, oe5 = self.en5(torch.cat([oe41, oe42],1)) 
+            te6, oe6 = self.en6(oe5) 
+            te7, oe7 = self.en7(oe6)
+            te8, oe8 = self.en8(oe7)
+            te7 = self.t7(te7)
+            te6 = self.t6(te6)
+            te5 = self.t5(te5)
+            te41 = self.t41(te41)
+            te42 = self.t42(te42)
+            te31 = self.t31(te31)
+            te32 = self.t32(te32)
+            te21 = self.t21(te21)
+            te22 = self.t22(te22)
+            te8 = self.t8(te8)
+            od8 = torch.cat([self.de8(oe8), te8],1)	  
+            od7 = torch.cat([self.de7(od8), te7],1)	
+            od6 = torch.cat([self.de6(od7), te6],1)
+            od5 = torch.cat([self.de5(od6), te5],1)	
+            od4 = torch.cat([self.de4(od5), torch.cat([te41,te42],1)],1)	  
+            od3 = torch.cat([self.de3(od4), torch.cat([te31,te32],1)],1)	  
+            od2 = torch.cat([self.de2(od3), torch.cat([te21,te22],1)],1)	  
+            od1 = self.de1(od2)
+            return(od1)'''
+
+        '''self.en1 = EnLayerBi(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True) #128
+        self.t11 = TransLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True, factor=2)
+        self.t12 = TransLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True, factor=2)
+        self.en2 = EnLayerBi(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer) #64
+        self.t21 = TransLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer, factor=2)
+        self.t22 = TransLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer, factor=2)		
+        self.en3 = EnLayerBi(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor = 2) #32
+        self.t31 = TransLayer(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor=2)
+        self.t32 = TransLayer(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor=2)
+        self.en4 = EnLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer)#16
+        #self.t41 = TransLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer, factor=2)
+        self.t4 = TransLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer, factor=1)
+        self.en5 = EnLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout) #8
+        self.t5 = TransLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout)
+        self.en6 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) #4
+        self.t6 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) 
+        self.en7 = EnLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer) #2
+        self.t7 = TransLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer)
+        self.en8 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True) #1
+        self.t8 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True)
+        self.de8 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True) #2
+        self.de7 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) #4
+        self.de6 = DeLayer(ngf * 8, ngf * 8, input_nc=None,norm_layer=norm_layer) #8
+        self.de5 = DeLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout) #16
+        self.de4 = DeLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer) #32
+        self.de3 = DeLayer(ngf * 2, ngf * 4, input_nc=None,  norm_layer=norm_layer) #64
+        self.de2 = DeLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer) #128
+        self.de1 = DeLayer(output_nc, ngf, input_nc=input_nc,  norm_layer=norm_layer, outermost=True) # 256'''
+
+        self.en1 = EnLayerBi(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True)  # 128
+        self.t11 = TransLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True, factor=2)
+        self.t12 = TransLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True, factor=2)
+        self.en2 = EnLayerBi(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer)  # 64
+        self.t21 = TransLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer, factor=2)
+        self.t22 = TransLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer, factor=2)
+        self.en3 = EnLayerBi(ngf * 2, ngf * 4, input_nc=None, norm_layer=norm_layer, factor=1)  # 32
+        self.t31 = TransLayer(ngf * 2, ngf * 4, input_nc=None, norm_layer=norm_layer, factor=2)
+        self.t32 = TransLayer(ngf * 2, ngf * 4, input_nc=None, norm_layer=norm_layer, factor=2)
+        self.en4 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer)  # 16
+        # self.t41 = TransLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer, factor=2)
+        self.t4 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, factor=2)
+        self.en5 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, use_dropout=use_dropout)  # 8
+        self.t5 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, use_dropout=use_dropout)
+        self.en6 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer)  # 4
+        self.t6 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer)
+        self.en7 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer)  # 2
+        self.t7 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer)
+        self.en8 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True)  # 1
+        self.t8 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True)
+        self.de8 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True)  # 2
+        self.de7 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer)  # 4
+        self.de6 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer)  # 8
+        self.de5 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, use_dropout=use_dropout)  # 16
+        self.de4 = DeLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer)  # 32
+        self.de3 = DeLayer(ngf * 2, ngf * 4, input_nc=None, norm_layer=norm_layer)  # 64
+        self.de2 = DeLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer)  # 128
+        self.de1 = DeLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True)
 
     def forward(self, input, input2):
- 	    oe11, oe12 = self.en1(input, input2)  #128 te2 	 
-	    te21, te22, oe21, oe22 = self.en2(oe11,oe12) 
-	    te31, te32, oe31, oe32 = self.en3(oe21, oe22) 
-	    te41, te42, oe41, oe42 = self.en4(oe31, oe32)  
-	    te5, oe5 = self.en5(torch.cat([oe41, oe42],1)) 
-	    te6, oe6 = self.en6(oe5) 
-	    te7, oe7 = self.en7(oe6)
-	    te8, oe8 = self.en8(oe7)
-	    te7 = self.t7(te7)
-	    te6 = self.t6(te6)
-	    te5 = self.t5(te5)
-	    te41 = self.t41(te41)
-	    te42 = self.t42(te42)
-	    te31 = self.t31(te31)
-	    te32 = self.t32(te32)
-	    te21 = self.t21(te21)
-	    te22 = self.t22(te22)
-	    te8 = self.t8(te8)
-	    od8 = torch.cat([self.de8(oe8), te8],1)	  
-	    od7 = torch.cat([self.de7(od8), te7],1)	
-	    od6 = torch.cat([self.de6(od7), te6],1)
-	    od5 = torch.cat([self.de5(od6), te5],1)	
-	    od4 = torch.cat([self.de4(od5), torch.cat([te41,te42],1)],1)	  
-	    od3 = torch.cat([self.de3(od4), torch.cat([te31,te32],1)],1)	  
-	    od2 = torch.cat([self.de2(od3), torch.cat([te21,te22],1)],1)	  
-	    od1 = self.de1(od2)
-	    return(od1)'''
+        oe11, oe12 = self.en1(input, input2)  # 128 te2
+        # print([oe11.size(), oe12.size()])
+        te21, te22, oe21, oe22 = self.en2(oe11, oe12)
+        # print([oe21.size(), oe22.size()])
+        te31, te32, oe31, oe32 = self.en3(oe21, oe22)
+        # print([oe31.size(), oe32.size()])
+        te4, oe4 = self.en4(torch.cat([oe31, oe32], 1))
+        # print(oe4.size())
+        # te5, oe5 = self.en5(torch.cat([oe41, oe42],1))
+        te5, oe5 = self.en5(oe4)
+        # print(oe5.size())
+        te6, oe6 = self.en6(oe5)
+        # print(oe6.size())
+        te7, oe7 = self.en7(oe6)
+        # print(oe7.size())
+        te8, oe8 = self.en8(oe7)
+        # print(oe8.size())
+        te8 = self.t8(te8)
+        te7 = self.t7(te7)
+        te6 = self.t6(te6)
+        te5 = self.t5(te5)
+        # te41 = self.t41(te41)
+        te4 = self.t4(te4)
+        te31 = self.t31(te31)
+        te32 = self.t32(te32)
+        te21 = self.t21(te21)
+        te22 = self.t22(te22)
+        # print('-----en--de-----')
 
-
-	'''self.en1 = EnLayerBi(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True) #128
-	self.t11 = TransLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True, factor=2)
-	self.t12 = TransLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True, factor=2)
-	self.en2 = EnLayerBi(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer) #64
-	self.t21 = TransLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer, factor=2)
-	self.t22 = TransLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer, factor=2)		
-	self.en3 = EnLayerBi(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor = 2) #32
-	self.t31 = TransLayer(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor=2)
-	self.t32 = TransLayer(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor=2)
-	self.en4 = EnLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer)#16
-	#self.t41 = TransLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer, factor=2)
-	self.t4 = TransLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer, factor=1)
-	self.en5 = EnLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout) #8
-	self.t5 = TransLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout)
-	self.en6 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) #4
-	self.t6 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) 
-	self.en7 = EnLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer) #2
-	self.t7 = TransLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer)
-	self.en8 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True) #1
-	self.t8 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True)
-	self.de8 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True) #2
-	self.de7 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) #4
-	self.de6 = DeLayer(ngf * 8, ngf * 8, input_nc=None,norm_layer=norm_layer) #8
-	self.de5 = DeLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout) #16
-	self.de4 = DeLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer) #32
-	self.de3 = DeLayer(ngf * 2, ngf * 4, input_nc=None,  norm_layer=norm_layer) #64
-	self.de2 = DeLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer) #128
-	self.de1 = DeLayer(output_nc, ngf, input_nc=input_nc,  norm_layer=norm_layer, outermost=True) # 256'''
-
-	self.en1 = EnLayerBi(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True) #128
-	self.t11 = TransLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True, factor=2)
-	self.t12 = TransLayer(output_nc, ngf, input_nc=input_nc, norm_layer=norm_layer, outermost=True, factor=2)
-	self.en2 = EnLayerBi(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer) #64
-	self.t21 = TransLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer, factor=2)
-	self.t22 = TransLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer, factor=2)		
-	self.en3 = EnLayerBi(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor = 1) #32
-	self.t31 = TransLayer(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor=2)
-	self.t32 = TransLayer(ngf * 2, ngf * 4, input_nc=None,norm_layer=norm_layer, factor=2)
-	self.en4 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer)#16
-	#self.t41 = TransLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer, factor=2)
-	self.t4 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, factor=2)
-	self.en5 = EnLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout) #8
-	self.t5 = TransLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout)
-	self.en6 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) #4
-	self.t6 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) 
-	self.en7 = EnLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer) #2
-	self.t7 = TransLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer)
-	self.en8 = EnLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True) #1
-	self.t8 = TransLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True)
-	self.de8 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer, innermost=True) #2
-	self.de7 = DeLayer(ngf * 8, ngf * 8, input_nc=None, norm_layer=norm_layer) #4
-	self.de6 = DeLayer(ngf * 8, ngf * 8, input_nc=None,norm_layer=norm_layer) #8
-	self.de5 = DeLayer(ngf * 8, ngf * 8, input_nc=None,  norm_layer=norm_layer, use_dropout=use_dropout) #16
-	self.de4 = DeLayer(ngf * 4, ngf * 8, input_nc=None, norm_layer=norm_layer) #32
-	self.de3 = DeLayer(ngf * 2, ngf * 4, input_nc=None,  norm_layer=norm_layer) #64
-	self.de2 = DeLayer(ngf, ngf * 2, input_nc=None, norm_layer=norm_layer) #128
-	self.de1 = DeLayer(output_nc, ngf, input_nc=input_nc,  norm_layer=norm_layer, outermost=True)
-
-	
-
-    def forward(self, input, input2):
- 	    oe11, oe12 = self.en1(input, input2)  #128 te2 
-	    #print([oe11.size(), oe12.size()])		 
-	    te21, te22, oe21, oe22 = self.en2(oe11,oe12) 
-	    #print([oe21.size(), oe22.size()])		 
-	    te31, te32, oe31, oe32 = self.en3(oe21, oe22) 
-	    #print([oe31.size(), oe32.size()])		 
-	    te4, oe4 = self.en4(torch.cat([oe31, oe32],1))  
-	    #print(oe4.size())	
-	    #te5, oe5 = self.en5(torch.cat([oe41, oe42],1)) 
-	    te5, oe5 = self.en5(oe4)
-	    #print(oe5.size())	
-	    te6, oe6 = self.en6(oe5) 
-	    #print(oe6.size())	
-	    te7, oe7 = self.en7(oe6)
-	    #print(oe7.size())	
-	    te8, oe8 = self.en8(oe7)
-	    #print(oe8.size())	
-	    te8 = self.t8(te8)
-	    te7 = self.t7(te7)
-	    te6 = self.t6(te6)
-	    te5 = self.t5(te5)
-	    #te41 = self.t41(te41)
-	    te4 = self.t4(te4)
-	    te31 = self.t31(te31)
-	    te32 = self.t32(te32)
-	    te21 = self.t21(te21)
-	    te22 = self.t22(te22)
-	    #print('-----en--de-----')
-	     
-	    od8 = torch.cat([self.de8(oe8), te8],1)
-	    #print(od8.size())		 
-	    od7 = torch.cat([self.de7(od8), te7],1)
-	    #print(od7.size())	
-	    od6 = torch.cat([self.de6(od7), te6],1)
-	    #print(od6.size())	
-	    od5 = torch.cat([self.de5(od6), te5],1)	
-	    #print(od5.size())	
-	    #print('start of d4')
-	    #print(te4.size())
-	    od4 = torch.cat([self.de4(od5),te4],1)	 
-	    #od4 = torch.cat([self.de4(od5), torch.cat([te41,te42],1)],1)
-	    #print(od4.size())	 
-	    #print('---') 
-	    od3 = torch.cat([self.de3(od4), torch.cat([te31,te32],1)],1)
-	    #print(od3.size())		  
-	    od2 = torch.cat([self.de2(od3), torch.cat([te21,te22],1)],1)
-	    #print(od2.size())		  
-	    od1 = self.de1(od2)
-            #print(od1.size())	
-	    return(od1)
+        od8 = torch.cat([self.de8(oe8), te8], 1)
+        # print(od8.size())
+        od7 = torch.cat([self.de7(od8), te7], 1)
+        # print(od7.size())
+        od6 = torch.cat([self.de6(od7), te6], 1)
+        # print(od6.size())
+        od5 = torch.cat([self.de5(od6), te5], 1)
+        # print(od5.size())
+        # print('start of d4')
+        # print(te4.size())
+        od4 = torch.cat([self.de4(od5), te4], 1)
+        # od4 = torch.cat([self.de4(od5), torch.cat([te41,te42],1)],1)
+        # print(od4.size())
+        # print('---')
+        od3 = torch.cat([self.de3(od4), torch.cat([te31, te32], 1)], 1)
+        # print(od3.size())
+        od2 = torch.cat([self.de2(od3), torch.cat([te21, te22], 1)], 1)
+        # print(od2.size())
+        od1 = self.de1(od2)
+        # print(od1.size())
+        return (od1)
 
 
 class TransLayer(nn.Module):
     def __init__(self, outer_nc, inner_nc, input_nc=None,
-                 submodule=None, outermost=False, innermost=False, norm_layer=nn.BatchNorm2d, use_dropout=False, factor = 1):
+                 submodule=None, outermost=False, innermost=False, norm_layer=nn.BatchNorm2d, use_dropout=False,
+                 factor=1):
         super(TransLayer, self).__init__()
-	self.outermost = outermost
+        self.outermost = outermost
         if type(norm_layer) == functools.partial:
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:
             use_bias = norm_layer == nn.InstanceNorm2d
         if input_nc is None:
             input_nc = outer_nc
-        transconv = nn.Conv2d(input_nc, outer_nc/factor, kernel_size=3,
-  		stride=1, padding=1)
-	transnorm = norm_layer(input_nc/factor)
-	transrelu = nn.LeakyReLU(0.2, True)
-	trans = [transconv, transnorm, transrelu]
-	self.trans = nn.Sequential(*trans)
+        transconv = nn.Conv2d(input_nc, outer_nc / factor, kernel_size=3,
+                              stride=1, padding=1)
+        transnorm = norm_layer(input_nc / factor)
+        transrelu = nn.LeakyReLU(0.2, True)
+        trans = [transconv, transnorm, transrelu]
+        self.trans = nn.Sequential(*trans)
 
     def forward(self, x):
-           return self.trans(x)
-	   
-        
-
+        return self.trans(x)
 
 
 class EnLayer(nn.Module):
@@ -765,28 +787,28 @@ class EnLayer(nn.Module):
                              stride=2, padding=1, bias=use_bias)
         downrelu = nn.LeakyReLU(0.2, True)
         downnorm = norm_layer(inner_nc)
-        
-	transconv = nn.Conv2d(input_nc, outer_nc, kernel_size=3,
-  		stride=1, padding=1)
-	transnorm = norm_layer(input_nc)
-	transrelu = nn.LeakyReLU(0.2, True)
-	trans = [transconv, transnorm, transrelu]
-	
+
+        transconv = nn.Conv2d(input_nc, outer_nc, kernel_size=3,
+                              stride=1, padding=1)
+        transnorm = norm_layer(input_nc)
+        transrelu = nn.LeakyReLU(0.2, True)
+        trans = [transconv, transnorm, transrelu]
+
         if outermost:
-           
+
             down = [downconv]
-            model = down 
-	
+            model = down
+
         elif innermost:
-         
+
             down = [downrelu, downconv]
-            model = down 
-	   	
+            model = down
+
         else:
             down = [downrelu, downconv, downnorm]
-	    model = down      	      
-     	self.model = nn.Sequential(*model)
-	self.trans = nn.Sequential(*trans)
+            model = down
+        self.model = nn.Sequential(*model)
+        self.trans = nn.Sequential(*trans)
 
     def forward(self, x):
         if self.outermost:
@@ -795,11 +817,10 @@ class EnLayer(nn.Module):
             return [x, self.model(x)]
 
 
-
-
 class EnLayerBi(nn.Module):
     def __init__(self, outer_nc, inner_nc, input_nc=None,
-                 submodule=None, outermost=False, innermost=False, norm_layer=nn.BatchNorm2d, use_dropout=False, factor = 1):
+                 submodule=None, outermost=False, innermost=False, norm_layer=nn.BatchNorm2d, use_dropout=False,
+                 factor=1):
         super(EnLayerBi, self).__init__()
         self.outermost = outermost
         if type(norm_layer) == functools.partial:
@@ -808,44 +829,42 @@ class EnLayerBi(nn.Module):
             use_bias = norm_layer == nn.InstanceNorm2d
         if input_nc is None:
             input_nc = outer_nc
-        downconv = nn.Conv2d(input_nc, inner_nc/ factor, kernel_size=4,
+        downconv = nn.Conv2d(input_nc, inner_nc / factor, kernel_size=4,
                              stride=2, padding=1, bias=use_bias)
         downrelu = nn.LeakyReLU(0.2, True)
-        downnorm = norm_layer(inner_nc/ factor)
-	downconv2 = nn.Conv2d(input_nc, inner_nc/ factor, kernel_size=4,
-                             stride=2, padding=1, bias=use_bias)
+        downnorm = norm_layer(inner_nc / factor)
+        downconv2 = nn.Conv2d(input_nc, inner_nc / factor, kernel_size=4,
+                              stride=2, padding=1, bias=use_bias)
         downrelu2 = nn.LeakyReLU(0.2, True)
-        downnorm2 = norm_layer(inner_nc/ factor)
+        downnorm2 = norm_layer(inner_nc / factor)
 
         if outermost:
-           
+
             down = [downconv]
-            model = down 
-	    down2 = [downconv2]
-            model2 = down2 
-	
+            model = down
+            down2 = [downconv2]
+            model2 = down2
+
         elif innermost:
-         
+
             down = [downrelu, downconv]
-            model = down 
-	    down2 = [downrelu2, downconv2]
-            model2 = down2 
-	   	
+            model = down
+            down2 = [downrelu2, downconv2]
+            model2 = down2
+
         else:
             down = [downrelu, downconv, downnorm]
-	    model = down 
+            model = down
             down2 = [downrelu2, downconv2, downnorm2]
-	    model2 = down2      	      
-     	self.model2 = nn.Sequential(*model2)
-     	self.model = nn.Sequential(*model)
-	
+            model2 = down2
+        self.model2 = nn.Sequential(*model2)
+        self.model = nn.Sequential(*model)
 
-    def forward(self, x,y):
+    def forward(self, x, y):
         if self.outermost:
-            return [ self.model(x), self.model2(y)]
+            return [self.model(x), self.model2(y)]
         else:
             return [x, y, self.model(x), self.model2(y)]
-
 
 
 class DeLayer(nn.Module):
@@ -859,25 +878,25 @@ class DeLayer(nn.Module):
             use_bias = norm_layer == nn.InstanceNorm2d
         if input_nc is None:
             input_nc = outer_nc
-        
+
         uprelu = nn.ReLU(True)
         upnorm = norm_layer(outer_nc)
-        
+
         if outermost:
             upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
                                         kernel_size=4, stride=2,
                                         padding=1)
             up = [uprelu, upconv, nn.Tanh()]
             model = up
-	
+
         elif innermost:
             upconv = nn.ConvTranspose2d(inner_nc, outer_nc,
                                         kernel_size=4, stride=2,
                                         padding=1, bias=use_bias)
-          
+
             up = [uprelu, upconv, upnorm]
             model = up
-	   	
+
         else:
             upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
                                         kernel_size=4, stride=2,
@@ -885,18 +904,13 @@ class DeLayer(nn.Module):
             up = [uprelu, upconv, upnorm]
 
             if use_dropout:
-                model =  up + [nn.Dropout(0.5)]
+                model = up + [nn.Dropout(0.5)]
             else:
-                model = up        	      
-     	self.model = nn.Sequential(*model)
+                model = up
+        self.model = nn.Sequential(*model)
+
     def forward(self, x):
-            return self.model(x)
- 
-
-
-
-
-
+        return self.model(x)
 
 
 class UnetGeneratorMM(nn.Module):
@@ -906,19 +920,25 @@ class UnetGeneratorMM(nn.Module):
         self.gpu_ids = gpu_ids
 
         # construct unet structure
-        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer, innermost=True)
+        unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=None, norm_layer=norm_layer,
+                                             innermost=True)
         for i in range(num_downs - 5):
-            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer, use_dropout=use_dropout)
-        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+            unet_block = UnetSkipConnectionBlock(ngf * 8, ngf * 8, input_nc=None, submodule=unet_block,
+                                                 norm_layer=norm_layer, use_dropout=use_dropout)
+        unet_block = UnetSkipConnectionBlock(ngf * 4, ngf * 8, input_nc=None, submodule=unet_block,
+                                             norm_layer=norm_layer)
 
-        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
+        unet_block = UnetSkipConnectionBlock(ngf * 2, ngf * 4, input_nc=None, submodule=unet_block,
+                                             norm_layer=norm_layer)
         unet_block = UnetSkipConnectionBlock(ngf, ngf * 2, input_nc=None, submodule=unet_block, norm_layer=norm_layer)
-        unet_block = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block, norm_layer=norm_layer, outermost=True)
+        unet_block = UnetSkipConnectionBlock(output_nc, ngf, input_nc=input_nc, submodule=unet_block,
+                                             norm_layer=norm_layer, outermost=True)
 
         self.model = unet_block
 
     def forward(self, input, input2):
-            return self.model(input)
+        return self.model(input)
+
 
 # Defines the submodule with skip connection.
 # X -------------------identity---------------------- X
@@ -941,13 +961,13 @@ class UnetSkipConnectionBlock(nn.Module):
         uprelu = nn.ReLU(True)
         upnorm = norm_layer(outer_nc)
         transconv = nn.Conv2d(input_nc, outer_nc, kernel_size=3,
-  		stride=1, padding=1)
-	transnorm = norm_layer(input_nc)
-	trans = [transconv, transnorm]
-	
-	#self.trans =nn.Sequential(nn.Conv2d(input_nc, outer_nc, kernel_size=3,
-  	#	stride=1, padding=1))
-	#self.trans = nn.Sequential(nn.UpsamplingNearest2d(scale_factor=2), nn.MaxPool2d(2))
+                              stride=1, padding=1)
+        transnorm = norm_layer(input_nc)
+        trans = [transconv, transnorm]
+
+        # self.trans =nn.Sequential(nn.Conv2d(input_nc, outer_nc, kernel_size=3,
+        #	stride=1, padding=1))
+        # self.trans = nn.Sequential(nn.UpsamplingNearest2d(scale_factor=2), nn.MaxPool2d(2))
         if outermost:
             upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
                                         kernel_size=4, stride=2,
@@ -955,7 +975,7 @@ class UnetSkipConnectionBlock(nn.Module):
             down = [downconv]
             up = [uprelu, upconv, nn.Tanh()]
             model = down + [submodule] + up
-	
+
         elif innermost:
             upconv = nn.ConvTranspose2d(inner_nc, outer_nc,
                                         kernel_size=4, stride=2,
@@ -963,7 +983,7 @@ class UnetSkipConnectionBlock(nn.Module):
             down = [downrelu, downconv]
             up = [uprelu, upconv, upnorm]
             model = down + up
-	   	
+
         else:
             upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
                                         kernel_size=4, stride=2,
@@ -974,23 +994,25 @@ class UnetSkipConnectionBlock(nn.Module):
             if use_dropout:
                 model = down + [submodule] + up + [nn.Dropout(0.5)]
             else:
-                model = down + [submodule] + up        	      
-     	self.model = nn.Sequential(*model)
+                model = down + [submodule] + up
+        self.model = nn.Sequential(*model)
+
     def forward(self, x):
         if self.outermost:
             return self.model(x)
         else:
-	    #out1 = self.trans(x)
-	    #out1 = 
-	    out2 = self.model(x)
+            # out1 = self.trans(x)
+            # out1 =
+            out2 = self.model(x)
             return torch.cat((x, out2), 1)
+
 
 class UnetSkipConnectionBlockMM(nn.Module):
     def __init__(self, outer_nc, inner_nc, input_nc=None,
                  submodule=None, outermost=False, innermost=False, norm_layer=nn.BatchNorm2d, use_dropout=False):
         super(UnetSkipConnectionBlockMM, self).__init__()
         self.outermost = outermost
-	self.innermost = innermost
+        self.innermost = innermost
         if type(norm_layer) == functools.partial:
             use_bias = norm_layer.func == nn.InstanceNorm2d
         else:
@@ -998,73 +1020,71 @@ class UnetSkipConnectionBlockMM(nn.Module):
         if input_nc is None:
             input_nc = outer_nc
 
-        if innermost:		 
+        if innermost:
 
-   	     	downconv1 = nn.Conv2d(input_nc, inner_nc/2, kernel_size=4,
-                             stride=2, padding=1, bias=use_bias)
-        	downconv2 = nn.Conv2d(input_nc, inner_nc/2, kernel_size=4,
-                             stride=2, padding=1, bias=use_bias)
-        	uprelu = nn.ReLU(True)
-        	upnorm = norm_layer(outer_nc)
-        	upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
-                                        kernel_size=4, stride=2,
-                                        padding=1)
-        
-		down1 =[downconv1]
-		self.down1 = nn.Sequential(*down1)
-		down2 = [downconv2]	
-		self.down2 = nn.Sequential(*down2)
-        	up = [uprelu, upconv, nn.Tanh()]
-        	model =  [submodule] + up
-        	self.model = nn.Sequential(*model)
-		
-
-	elif outermost:
-              	downconv1 = nn.Conv2d(input_nc, inner_nc, kernel_size=4,
-                             stride=2, padding=1, bias=use_bias)
-        	downconv2 = nn.Conv2d(input_nc, inner_nc, kernel_size=4,
-                             stride=2, padding=1, bias=use_bias)
-        	uprelu = nn.ReLU(True)
-        	upnorm = norm_layer(outer_nc)
-        	upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
+            downconv1 = nn.Conv2d(input_nc, inner_nc / 2, kernel_size=4,
+                                  stride=2, padding=1, bias=use_bias)
+            downconv2 = nn.Conv2d(input_nc, inner_nc / 2, kernel_size=4,
+                                  stride=2, padding=1, bias=use_bias)
+            uprelu = nn.ReLU(True)
+            upnorm = norm_layer(outer_nc)
+            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
                                         kernel_size=4, stride=2,
                                         padding=1)
 
-
-		transconv1 = nn.Conv2d(input_nc, outer_nc/2, kernel_size=3,
-            			stride=0, padding=1, bias=use_bias)
-	        transnorm1 = norm_layer(outer_nc)
-
- 	        transconv2 = nn.Conv2d(input_nc, outer_nc/2, kernel_size=3,
-            			stride=0, padding=1, bias=use_bias)
-	        transnorm2 = norm_layer(outer_nc)
-    	        #self.trans1 =nn.Sequential(trans1)
-                #self.trans2 =nn.Sequential(*trans2) 
+            down1 = [downconv1]
+            self.down1 = nn.Sequential(*down1)
+            down2 = [downconv2]
+            self.down2 = nn.Sequential(*down2)
+            up = [uprelu, upconv, nn.Tanh()]
+            model = [submodule] + up
+            self.model = nn.Sequential(*model)
 
 
-		down1 =[downconv1]
-		self.down1 = nn.Sequential(*down1)
-		down2 = [downconv2]	
-		self.down2 = nn.Sequential(*down2)
-        	up = [uprelu, upconv, nn.Tanh()]
-        	model =  [submodule] + up
-        	self.submodule = submodule
-		self.up = nn.Sequential(*up) ####
-		
-	
+        elif outermost:
+            downconv1 = nn.Conv2d(input_nc, inner_nc, kernel_size=4,
+                                  stride=2, padding=1, bias=use_bias)
+            downconv2 = nn.Conv2d(input_nc, inner_nc, kernel_size=4,
+                                  stride=2, padding=1, bias=use_bias)
+            uprelu = nn.ReLU(True)
+            upnorm = norm_layer(outer_nc)
+            upconv = nn.ConvTranspose2d(inner_nc * 2, outer_nc,
+                                        kernel_size=4, stride=2,
+                                        padding=1)
+
+            transconv1 = nn.Conv2d(input_nc, outer_nc / 2, kernel_size=3,
+                                   stride=0, padding=1, bias=use_bias)
+            transnorm1 = norm_layer(outer_nc)
+
+            transconv2 = nn.Conv2d(input_nc, outer_nc / 2, kernel_size=3,
+                                   stride=0, padding=1, bias=use_bias)
+            transnorm2 = norm_layer(outer_nc)
+            # self.trans1 =nn.Sequential(trans1)
+            # self.trans2 =nn.Sequential(*trans2)
+
+            down1 = [downconv1]
+            self.down1 = nn.Sequential(*down1)
+            down2 = [downconv2]
+            self.down2 = nn.Sequential(*down2)
+            up = [uprelu, upconv, nn.Tanh()]
+            model = [submodule] + up
+            self.submodule = submodule
+            self.up = nn.Sequential(*up)  ####
+
     def forward(self, x, y):
-	print("MM")
-	print(self.innermost)
-	print(x.size())
-	if self.innermost:	
-	    return torch.cat([x,self.model(torch.cat((self.down1(x),self.down2(y)),dim=1))],1)
-	    #return torch.cat((x,self.model(self.down1(x))), dim = 1)
-	    #return self.model(self.down1(x))
-	if self.outermost:	
-	    return self.up(self.submodule(self.down1(x),self.down2(y))) 
+        print("MM")
+        print(self.innermost)
+        print(x.size())
+        if self.innermost:
+            return torch.cat([x, self.model(torch.cat((self.down1(x), self.down2(y)), dim=1))], 1)
+        # return torch.cat((x,self.model(self.down1(x))), dim = 1)
+        # return self.model(self.down1(x))
+        if self.outermost:
+            return self.up(self.submodule(self.down1(x), self.down2(y)))
+
+        # Defines the PatchGAN discriminator with the specified arguments.
 
 
-# Defines the PatchGAN discriminator with the specified arguments.
 class NLayerDiscriminator(nn.Module):
     def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d, use_sigmoid=False, gpu_ids=[]):
         super(NLayerDiscriminator, self).__init__()
@@ -1085,7 +1105,7 @@ class NLayerDiscriminator(nn.Module):
         nf_mult_prev = 1
         for n in range(1, n_layers):
             nf_mult_prev = nf_mult
-            nf_mult = min(2**n, 8)
+            nf_mult = min(2 ** n, 8)
             sequence += [
                 nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult,
                           kernel_size=kw, stride=2, padding=padw, bias=use_bias),
@@ -1094,7 +1114,7 @@ class NLayerDiscriminator(nn.Module):
             ]
 
         nf_mult_prev = nf_mult
-        nf_mult = min(2**n_layers, 8)
+        nf_mult = min(2 ** n_layers, 8)
         sequence += [
             nn.Conv2d(ndf * nf_mult_prev, ndf * nf_mult,
                       kernel_size=kw, stride=1, padding=padw, bias=use_bias),

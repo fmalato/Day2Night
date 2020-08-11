@@ -26,7 +26,7 @@ def make_dot(var, params=None):
     seen = set()
 
     def size_to_str(size):
-        return '('+(', ').join(['%d' % v for v in size])+')'
+        return '(' + (', ').join(['%d' % v for v in size]) + ')'
 
     def add_nodes(var):
         if var not in seen:
@@ -49,5 +49,6 @@ def make_dot(var, params=None):
                 for t in var.saved_tensors:
                     dot.edge(str(id(t)), str(id(var)))
                     add_nodes(t)
+
     add_nodes(var.grad_fn)
     return dot

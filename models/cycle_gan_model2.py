@@ -5,7 +5,7 @@ from collections import OrderedDict
 from torch.autograd import Variable
 import itertools
 import util.util as util
-import unet 
+import unet
 from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
@@ -19,61 +19,63 @@ class CycleGANModel(BaseModel):
     def initialize(self, opt):
         BaseModel.initialize(self, opt)
         nb = opt.batchSize
-        size = opt.fineSize	
+        size = opt.fineSize
         self.no_input = opt.no_input
-        self.input_A = self.Tensor(nb, self.no_input, opt.input_nc, size, size) # store inputs in a tensor # DONE
+        self.input_A = self.Tensor(nb, self.no_input, opt.input_nc, size, size)  # store inputs in a tensor # DONE
         self.input_B = self.Tensor(nb, opt.output_nc, size, size)
 
         # load/define networks
         # The naming conversion is different from those used in the paper
         # Code (paper): G_A (G), G_B (F), D_A (D_Y), D_B (D_X)
-	self.netG_B = []
-	self.netG_A = (networks.define_G(opt.output_nc, opt.input_nc*self.no_input,
-                                        opt.ngf, opt.which_model_netG, opt.norm, not opt.no_dropout, opt.init_type,  						self.gpu_ids))
-        #self.netG_A = unet.unet(feature_scale=4, n_classes=opt.output_nc, is_deconv=True, in_channels=opt.input_nc, is_batchnorm=True, no_input=opt.no_input, gpu_ids =self.gpu_ids)	
-	#if len(self.gpu_ids) > 0:
-       	#	 self.netG_A.cuda(device_id=self.gpu_ids[0])
+        self.netG_B = []
+        self.netG_A = (networks.define_G(opt.output_nc, opt.input_nc * self.no_input,
+                                         opt.ngf, opt.which_model_netG, opt.norm, not opt.no_dropout, opt.init_type,
+                                         self.gpu_ids))
+        # self.netG_A = unet.unet(feature_scale=4, n_classes=opt.output_nc, is_deconv=True, in_channels=opt.input_nc, is_batchnorm=True, no_input=opt.no_input, gpu_ids =self.gpu_ids)
+        # if len(self.gpu_ids) > 0:
+        #	 self.netG_A.cuda(device_id=self.gpu_ids[0])
 
-	for i in range(self.no_input):
-	        self.netG_B.append(networks.define_G(opt.output_nc, opt.input_nc,
-                                        opt.ngf, opt.which_model_netG, opt.norm, not opt.no_dropout, opt.init_type,  						self.gpu_ids))
+        for i in range(self.no_input):
+            self.netG_B.append(networks.define_G(opt.output_nc, opt.input_nc,
+                                                 opt.ngf, opt.which_model_netG, opt.norm, not opt.no_dropout,
+                                                 opt.init_type, self.gpu_ids))
 
         if self.isTrain:
             use_sigmoid = opt.no_lsgan
-	    self.netD_B = []
+            self.netD_B = []
             self.netD_A = networks.define_D(opt.output_nc, opt.ndf,
                                             opt.which_model_netD,
                                             opt.n_layers_D, opt.norm, use_sigmoid, opt.init_type, self.gpu_ids)
             self.netD_B.append(networks.define_D(opt.input_nc, opt.ndf,
-                                            opt.which_model_netD,
-                                            opt.n_layers_D, opt.norm, use_sigmoid, opt.init_type, self.gpu_ids))
+                                                 opt.which_model_netD,
+                                                 opt.n_layers_D, opt.norm, use_sigmoid, opt.init_type, self.gpu_ids))
 
         if not self.isTrain or opt.continue_train:
-	    print("Not applied yet")
-	    print(owl)
-            #which_epoch = opt.which_epoch
-            #self.load_network(self.netG_A, 'G_A', which_epoch)
-            #self.load_network(self.netG_B, 'G_B', which_epoch)
-            #if self.isTrain:
-            #    self.load_network(self.netD_A, 'D_A', which_epoch)
-            #    self.load_network(self.netD_B, 'D_B', which_epoch)
+            print("Not applied yet")
+            print(owl)
+        # which_epoch = opt.which_epoch
+        # self.load_network(self.netG_A, 'G_A', which_epoch)
+        # self.load_network(self.netG_B, 'G_B', which_epoch)
+        # if self.isTrain:
+        #    self.load_network(self.netD_A, 'D_A', which_epoch)
+        #    self.load_network(self.netD_B, 'D_B', which_epoch)
 
         if self.isTrain:
             self.old_lr = opt.lr
-	    self.fake_A_pool = []
-	    for i in range(self.no_input):
-            	self.fake_A_pool.append(ImagePool(opt.pool_size))
+            self.fake_A_pool = []
+            for i in range(self.no_input):
+                self.fake_A_pool.append(ImagePool(opt.pool_size))
             self.fake_B_pool = ImagePool(opt.pool_size)
             # define loss functions
             self.criterionGAN = networks.GANLoss(use_lsgan=not opt.no_lsgan, tensor=self.Tensor)
             self.criterionCycle = torch.nn.L1Loss()
             self.criterionIdt = torch.nn.L1Loss()
             # initialize optimizers
-	    Gparams = []
-	    Dparams = []
-	    for i in range(self.no_input):
-		Gparams+=self.netG_B[i].parameters()	
-		Dparams+=self.netD_B[i].parameters()	
+            Gparams = []
+            Dparams = []
+            for i in range(self.no_input):
+                Gparams += self.netG_B[i].parameters()
+                Dparams += self.netD_B[i].parameters()
             self.optimizer_G = torch.optim.Adam(itertools.chain(self.netG_A.parameters(), Gparams),
                                                 lr=opt.lr, betas=(opt.beta1, 0.999))
             self.optimizer_D_B = torch.optim.Adam(Dparams, lr=opt.lr, betas=(opt.beta1, 0.999))
@@ -88,12 +90,12 @@ class CycleGANModel(BaseModel):
 
         print('---------- Networks initialized -------------')
         networks.print_network(self.netG_A)
-	for i in range(self.no_input):
-	        networks.print_network(self.netG_B[i])
+        for i in range(self.no_input):
+            networks.print_network(self.netG_B[i])
         if self.isTrain:
             networks.print_network(self.netD_A)
-	    for i in range(self.no_input):	
-            	networks.print_network(self.netD_B[i])
+            for i in range(self.no_input):
+                networks.print_network(self.netD_B[i])
         print('-----------------------------------------------')
 
     def set_input(self, input):
@@ -135,12 +137,12 @@ class CycleGANModel(BaseModel):
         return loss_D
 
     def backward_D_A(self):
-        fake_B = self.fake_B_+pool.query(self.fake_B)
+        fake_B = self.fake_B_ + pool.query(self.fake_B)
         self.loss_D_A = self.backward_D_basic(self.netD_A, self.real_B, fake_B)
 
     def backward_D_B(self):
-	for i in range(self.no_input):
-	        fake_A = self.fake_A_pool[i].query(self.genbuffer[i])
+        for i in range(self.no_input):
+            fake_A = self.fake_A_pool[i].query(self.genbuffer[i])
         self.loss_D_B = self.backward_D_basic(self.netD_B, self.real_A[i], fake_A)
 
     def backward_G(self):
@@ -148,42 +150,42 @@ class CycleGANModel(BaseModel):
         lambda_A = self.opt.lambda_A
         lambda_B = self.opt.lambda_B
         # Identity loss
-        #if lambda_idt > 0:
+        # if lambda_idt > 0:
         #    # G_A should be identity if real_B is fed.
         #    self.idt_A = self.netG_A.forward(self.real_B)
         #    self.loss_idt_A = self.criterionIdt(self.idt_A, self.real_B) * lambda_B * lambda_idt
         #    # G_B should be identity if real_A is fed.
         #    self.idt_B = self.netG_B.forward(self.real_A)
         #    self.loss_idt_B = self.criterionIdt(self.idt_B, self.real_A) * lambda_A * lambda_idt
-        #else:
+        # else:
         self.loss_idt_A = 0
         self.loss_idt_B = 0
 
         # GAN loss
         # D_A(G_A(A))
-	print(self.real_A.size())
-	print(type(self.real_A))
+        print(self.real_A.size())
+        print(type(self.real_A))
         self.fake_B = self.netG_A.forward(self.real_A)
         pred_fake = self.netD_A.forward(self.fake_B)
         self.loss_G_A = self.criterionGAN(pred_fake, True)
-	self.loss_G_B = 0.0
-	self.loss_cycle_A = 0.0
-	self.loss_cycle_B =0.0
+        self.loss_G_B = 0.0
+        self.loss_cycle_A = 0.0
+        self.loss_cycle_B = 0.0
         # D_B(G_B(B))
-	for i in range(self.no_input):
-   	     self.fake_A = self.netG_B[i].forward(self.real_B)
-	     self.genbuffer.append(fake_A)
-             pred_fake = self.netD_B[i].forward(self.fake_A)
-             self.loss_G_B += self.criterionGAN(pred_fake, True)
-             # Forward cycle loss
-             self.rec_A = self.netG_B[i].forward(self.fake_B)
-             self.loss_cycle_A += self.criterionCycle(self.rec_A, self.real_A) * lambda_A
-             # Backward cycle loss
-             # fakeA now is real for except for the relevent channel
-	     temp_A = self.real_A
-	     temp_A[i] = fake_A
-             self.rec_B = self.netG_A.forward(temp_A)
-             self.loss_cycle_B += self.criterionCycle(self.rec_B, self.real_B) * lambda_B
+        for i in range(self.no_input):
+            self.fake_A = self.netG_B[i].forward(self.real_B)
+            self.genbuffer.append(fake_A)
+            pred_fake = self.netD_B[i].forward(self.fake_A)
+            self.loss_G_B += self.criterionGAN(pred_fake, True)
+            # Forward cycle loss
+            self.rec_A = self.netG_B[i].forward(self.fake_B)
+            self.loss_cycle_A += self.criterionCycle(self.rec_A, self.real_A) * lambda_A
+            # Backward cycle loss
+            # fakeA now is real for except for the relevent channel
+            temp_A = self.real_A
+            temp_A[i] = fake_A
+            self.rec_B = self.netG_A.forward(temp_A)
+            self.loss_cycle_B += self.criterionCycle(self.rec_B, self.real_B) * lambda_B
         # combined loss
         self.loss_G = self.loss_G_A + self.loss_G_B + self.loss_cycle_A + self.loss_cycle_B + self.loss_idt_A + self.loss_idt_B
         self.loss_G.backward()
@@ -192,7 +194,7 @@ class CycleGANModel(BaseModel):
         # forward
         self.forward()
         # G_A and G_B
-	self.genbuffer = []
+        self.genbuffer = []
         self.optimizer_G.zero_grad()
         self.backward_G()
         self.optimizer_G.step()

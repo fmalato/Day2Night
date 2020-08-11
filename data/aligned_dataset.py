@@ -15,7 +15,7 @@ class AlignedDataset(BaseDataset):
 
         self.AB_paths = sorted(make_dataset(self.dir_AB))
 
-        assert(opt.resize_or_crop == 'resize_and_crop')
+        assert (opt.resize_or_crop == 'resize_and_crop')
 
         transform_list = [transforms.ToTensor(),
                           transforms.Normalize((0.5, 0.5, 0.5),
@@ -36,9 +36,9 @@ class AlignedDataset(BaseDataset):
         h_offset = random.randint(0, max(0, h - self.opt.fineSize - 1))
 
         A = AB[:, h_offset:h_offset + self.opt.fineSize,
-               w_offset:w_offset + self.opt.fineSize]
+            w_offset:w_offset + self.opt.fineSize]
         B = AB[:, h_offset:h_offset + self.opt.fineSize,
-               w + w_offset:w + w_offset + self.opt.fineSize]
+            w + w_offset:w + w_offset + self.opt.fineSize]
 
         if self.opt.which_direction == 'BtoA':
             input_nc = self.opt.output_nc
@@ -60,7 +60,7 @@ class AlignedDataset(BaseDataset):
         if output_nc == 1:  # RGB to gray
             tmp = B[0, ...] * 0.299 + B[1, ...] * 0.587 + B[2, ...] * 0.114
             B = tmp.unsqueeze(0)
-    
+
         return {'A': A, 'B': B,
                 'A_paths': AB_path, 'B_paths': AB_path}
 
