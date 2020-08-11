@@ -10,7 +10,7 @@ from util.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
 import sys
-from visualize import make_dot
+from .visualize import make_dot
 
 
 class CycleGANModel(BaseModel):
