@@ -9,11 +9,12 @@ import numpy as np
 import scipy as sp
 
 import os
-paths = [x[0] for x in os.walk('/home/fmalato/KAIST/')]
+"""paths = [x[0] for x in os.walk('/home/fmalato/KAIST/')]
 # Erasing all leaves
 paths = [x for x in paths if not x.endswith(('lwir', 'visible', 'labels'))]
 # Erasing parent folders
-paths = [x for x in paths if 'V0' in x]
+paths = [x for x in paths if 'V0' in x]"""
+paths = ['/home/fmalato/KAIST/set01/V000/']
 # Separating folders that contain daily images from the nightly ones
 day = ['set00', 'set01', 'set02', 'set06', 'set07', 'set08']
 num_path = 1
