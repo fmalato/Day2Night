@@ -23,9 +23,9 @@ for path in paths:
     datasetB = path + '/lwir/*.jpg'
     # Choosing the right destination based on the current path
     if any(folder in path for folder in day):
-        destination = 'datasets/Day2Night/day/'
+        destination = 'datasets/Day2Night/trainA/'
     else:
-        destination = 'datasets/Day2Night/night/'
+        destination = 'datasets/Night2Day/trainA/'
     print('%d/%d - Current path: %s    Destination: %s' % (num_path, len(paths), path, destination))
     num_path += 1
     dataA = glob.glob(datasetA)
