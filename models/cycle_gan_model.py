@@ -101,9 +101,10 @@ class CycleGANModel(BaseModel):
         input_A1 = input['A1']
         input_A2 = input['A2']
         input_B = input['B']
-        self.input_A1.resize_(input_A1.size()).copy_(input_A1)
-        self.input_A2.resize_(input_A2.size()).copy_(input_A2)
-        self.input_B.resize_(input_B.size()).copy_(input_B)
+        # This should solve the input dimension error
+        #self.input_A1.resize_(input_A1.size()).copy_(input_A1)
+        #self.input_A2.resize_(input_A2.size()).copy_(input_A2)
+        #self.input_B.resize_(input_B.size()).copy_(input_B)
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):
