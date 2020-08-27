@@ -11,20 +11,26 @@ import os
 
 
 paths = [x[0] for x in os.walk('/home/fmalato/KAIST/')]
+#paths = [x[0] for x in os.walk('/Users/federico/fmalato/KAIST/')]
 # Erasing all leaves
 paths = [x for x in paths if x.endswith(('visible'))]
 night = ['set03', 'set04', 'set05', 'set09', 'set10', 'set11']
-paths = [x for x in paths if any(folder in paths for folder in night]
 destination = 'datasets/Day2Night/trainB/'
+num_path = 1
+count = 0
 
 for path in paths:
-    print('%d/%d - Current path: %s    Destination: %s' % (num_path, len(paths), path, destination))
-    num_path += 1
-    files = os.listdir(path)
-    count = 0
-    for f in files:
-        img = imread(f)
-        img = imresize(img, (128, 160, 3))
-        imsave(destination, img)
-        if count+1 % 100 == 0:
-            print('Processed: %d/%d' % (count, len(files)))
+    for folder in night:
+        if folder in path:
+            print('Current path: %s    Destination: %s' % (path, destination))
+            num_path += 1
+            files = os.listdir(path)
+            if '.DS_Store' in files:
+                files.remove('.DS_Store')
+            for f in files:
+                img = imread(path + '/' + f)
+                img = imresize(img, (128, 160, 3))
+                imsave(destination + '{x}.jpg'.format(x=count), img)
+                count += 1
+                if count+1 % 1 == 0:
+                    print('Processed: %d/%d' % (count, len(files)))
