@@ -9,16 +9,16 @@ import numpy as np
 import scipy as sp
 
 import os
-"""paths = [x[0] for x in os.walk('/home/fmalato/KAIST/')]
+paths = [x[0] for x in os.walk('/home/fmalato/KAIST/')]
 # Erasing all leaves
 paths = [x for x in paths if not x.endswith(('lwir', 'visible', 'labels'))]
 # Erasing parent folders
-paths = [x for x in paths if 'V0' in x]"""
+paths = [x for x in paths if 'V0' in x]
 #paths = ['/home/fmalato/KAIST/set01/V000/']
 # Test
-paths = ['imgs']
+#paths = ['imgs']
 # Separating folders that contain daily images from the nightly ones
-day = ['set00', 'set01', 'set02', 'set06', 'set07', 'set08']
+day = ['set00', 'set01', 'set08']
 num_path = 1
 for path in paths:
     datasetA = path + '/visible/*.jpg'
@@ -27,7 +27,7 @@ for path in paths:
     if any(folder in path for folder in day):
         destination = 'datasets/Day2Night/trainA/'
     else:
-        destination = 'datasets/Day2Night/trainA/'
+        continue
     print('%d/%d - Current path: %s    Destination: %s' % (num_path, len(paths), path, destination))
     num_path += 1
     dataA = glob.glob(datasetA)
