@@ -45,13 +45,20 @@ for path in paths:
         img_A = imresize(img_A, size=(128, 160, 3))
         img_B = imresize(img_B, size=(128, 160, 3))
         line = img_A
-        out = np.zeros((np.shape(img_B)[0], np.shape(img_B)[1] * 2, 3))
+        """out = np.zeros((np.shape(img_B)[0], np.shape(img_B)[1] * 2, 3))
         out[:, 0:np.shape(img_B)[1], 0] = img_B[:, :, 0]
         out[:, 0:np.shape(img_B)[1], 1] = img_B[:, :, 1]
         out[:, 0:np.shape(img_B)[1], 2] = img_B[:, :, 2]
         out[:, np.shape(img_B)[1]:2 * np.shape(img_B)[1], 0] = line[:, :, 0]
         out[:, np.shape(img_B)[1]:2 * np.shape(img_B)[1], 1] = line[:, :, 1]
-        out[:, np.shape(img_B)[1]:2 * np.shape(img_B)[1], 2] = line[:, :, 2]
+        out[:, np.shape(img_B)[1]:2 * np.shape(img_B)[1], 2] = line[:, :, 2]"""
+        out = np.zeros((np.shape(img_B)[0] * 2, np.shape(img_B)[1], 3))
+        out[0:np.shape(img_B)[0], :, 0] = img_B[:, :, 0]
+        out[0:np.shape(img_B)[0], :, 1] = img_B[:, :, 1]
+        out[0:np.shape(img_B)[0], :, 2] = img_B[:, :, 2]
+        out[np.shape(img_B)[0]:2 * np.shape(img_B)[0], :, 0] = line[:, :, 0]
+        out[np.shape(img_B)[0]:2 * np.shape(img_B)[0], :, 1] = line[:, :, 1]
+        out[np.shape(img_B)[0]:2 * np.shape(img_B)[0], :, 2] = line[:, :, 2]
         toimage(out, cmin=0, cmax=255).save(destination + str(count) + '.jpg')
         if count_proc % 100 == 0:
             print('    Processed: %d/%d' % (count_proc, frames))
