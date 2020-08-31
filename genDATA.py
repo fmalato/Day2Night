@@ -20,6 +20,7 @@ paths = [x for x in paths if 'V0' in x]
 # Separating folders that contain daily images from the nightly ones
 day = ['set00', 'set01', 'set08']
 num_path = 1
+len_paths = len(paths)
 for path in paths:
     datasetA = path + '/visible/*.jpg'
     datasetB = path + '/lwir/*.jpg'
@@ -27,8 +28,10 @@ for path in paths:
     if any(folder in path for folder in day):
         destination = 'datasets/Day2Night/trainA/'
     else:
+        print('%d/%d - Current path skipped.' % (num_path, len_paths))
+        num_path += 1
         continue
-    print('%d/%d - Current path: %s    Destination: %s' % (num_path, len(paths), path, destination))
+    print('%d/%d - Current path: %s    Destination: %s' % (num_path, len_paths, path, destination))
     num_path += 1
     dataA = glob.glob(datasetA)
     dataA = sorted(dataA)
