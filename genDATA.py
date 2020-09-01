@@ -9,17 +9,18 @@ import numpy as np
 import scipy as sp
 
 import os
-"""paths = [x[0] for x in os.walk('/home/fmalato/KAIST/')]
+paths = [x[0] for x in os.walk('/home/federico/Scrivania/KAIST/')]
 # Erasing all leaves
 paths = [x for x in paths if not x.endswith(('lwir', 'visible', 'labels'))]
 # Erasing parent folders
-paths = [x for x in paths if 'V0' in x]"""
+paths = [x for x in paths if 'V0' in x]
 #paths = ['/home/fmalato/KAIST/set01/V000/']
 # Test
-paths = ['imgs']
+#paths = ['imgs']
 # Separating folders that contain daily images from the nightly ones
-day = ['set00', 'set01', 'set02', 'set06', 'set07', 'set08']
+day = ['set00', 'set01', 'set08']
 num_path = 1
+len_paths = len(paths)
 for path in paths:
     datasetA = path + '/visible/*.jpg'
     datasetB = path + '/lwir/*.jpg'
@@ -27,8 +28,10 @@ for path in paths:
     if any(folder in path for folder in day):
         destination = 'datasets/Day2Night/trainA/'
     else:
-        destination = 'datasets/Day2Night/trainA/'
-    print('%d/%d - Current path: %s    Destination: %s' % (num_path, len(paths), path, destination))
+        print('%d/%d - Current path skipped.' % (num_path, len_paths))
+        num_path += 1
+        continue
+    print('%d/%d - Current path: %s    Destination: %s' % (num_path, len_paths, path, destination))
     num_path += 1
     dataA = glob.glob(datasetA)
     dataA = sorted(dataA)
@@ -42,8 +45,9 @@ for path in paths:
         count_proc += 1
         img_A = imread(j)
         img_B = imread(i)
-        img_A = imresize(img_A, size=(128, 160, 3))
-        img_B = imresize(img_B, size=(128, 160, 3))
+        # Useless, get resized anyway
+        """img_A = imresize(img_A, size=(128, 160, 3))
+        img_B = imresize(img_B, size=(128, 160, 3))"""
         line = img_A
         """out = np.zeros((np.shape(img_B)[0], np.shape(img_B)[1] * 2, 3))
         out[:, 0:np.shape(img_B)[1], 0] = img_B[:, :, 0]

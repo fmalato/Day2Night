@@ -23,8 +23,10 @@ class CycleGANModel(BaseModel):
         size = opt.fineSize
         self.no_input = opt.no_input
         self.input_A1 = self.Tensor(nb, opt.input_nc, size, size)  # store inputs in a tensor # DONE
-        self.input_A2 = self.Tensor(nb, opt.input_nc, size, size)  # store inputs in a tensor # DONE
+        # TODO: maybe little error here (opt.input_nc2 instead of opt.input_nc?)
+        self.input_A2 = self.Tensor(nb, opt.input_nc2, size, size)  # store inputs in a tensor # DONE
         self.input_B = self.Tensor(nb, opt.output_nc, size, size)
+        print('initialize: A1: {x}, A2: {y}'.format(x=self.input_A1.shape, y=self.input_A2.shape))
 
         # load/define networks
         # The naming conversion is different from those used in the paper
@@ -101,10 +103,9 @@ class CycleGANModel(BaseModel):
         input_A1 = input['A1']
         input_A2 = input['A2']
         input_B = input['B']
-        # This should solve the input dimension error
-        #self.input_A1.resize_(input_A1.size()).copy_(input_A1)
-        #self.input_A2.resize_(input_A2.size()).copy_(input_A2)
-        #self.input_B.resize_(input_B.size()).copy_(input_B)
+        self.input_A1.resize_(input_A1.size()).copy_(input_A1)
+        self.input_A2.resize_(input_A2.size()).copy_(input_A2)
+        self.input_B.resize_(input_B.size()).copy_(input_B)
         self.image_paths = input['A_paths' if AtoB else 'B_paths']
 
     def forward(self):

@@ -10,7 +10,7 @@ import scipy as sp
 import os
 
 
-paths = [x[0] for x in os.walk('/home/fmalato/KAIST/')]
+paths = [x[0] for x in os.walk('/home/federico/Scrivania/KAIST/')]
 #paths = [x[0] for x in os.walk('/Users/federico/fmalato/KAIST/')]
 # Erasing all leaves
 paths = [x for x in paths if x.endswith(('visible'))]
@@ -29,8 +29,9 @@ for path in paths:
                 files.remove('.DS_Store')
             for f in files:
                 img = imread(path + '/' + f)
-                img = imresize(img, (128, 160, 3))
+                # Useless, gets resized anyway
+                # img = imresize(img, (128, 160, 3))
                 imsave(destination + '{x}.jpg'.format(x=count), img)
                 count += 1
-                if count+1 % 1 == 0:
+                if count+1 % 100 == 0:
                     print('Processed: %d/%d' % (count, len(files)))

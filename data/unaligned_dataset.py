@@ -5,6 +5,7 @@ from data.image_folder import make_dataset
 from PIL import Image
 import PIL
 import random
+import imageio
 import numpy as np
 import torch
 
@@ -42,7 +43,8 @@ class UnalignedDataset(BaseDataset):
         B_path = self.B_paths[index_B]
 
         # print('(A, B) = (%d, %d)' % (index_A, index_B))
-        A_img = Image.open(A_path)  # .convert('RGB') # A image is a no_input*3 collection of images
+        # TODO: Dimension problem is here!
+        A_img = Image.open(A_path)    # .convert('RGB') # A image is a no_input*3 collection of images
         A_img = (self.transformA(A_img))
         A1 = A_img[1, 0:256, :]
         A2 = A_img[1, 256:512, :]

@@ -22,6 +22,7 @@ for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay + 1):
         iter_start_time = time.time()
         total_steps += opt.batchSize
         epoch_iter += opt.batchSize
+        # TODO: data gets loaded as [1, 1, 256, 256]
         model.set_input(data)
         model.optimize_parameters()
 
