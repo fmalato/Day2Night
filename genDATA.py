@@ -26,7 +26,7 @@ for path in paths:
     datasetB = path + '/lwir/*.jpg'
     # Choosing the right destination based on the current path
     if any(folder in path for folder in day):
-        destination = 'datasets/Day2Night/trainA/'
+        destination = 'imgs/'
     else:
         print('%d/%d - Current path skipped.' % (num_path, len_paths))
         num_path += 1
@@ -63,7 +63,8 @@ for path in paths:
         out[np.shape(img_B)[0]:2 * np.shape(img_B)[0], :, 0] = line[:, :, 0]
         out[np.shape(img_B)[0]:2 * np.shape(img_B)[0], :, 1] = line[:, :, 1]
         out[np.shape(img_B)[0]:2 * np.shape(img_B)[0], :, 2] = line[:, :, 2]
-        toimage(out, cmin=0, cmax=255).save(destination + str(count) + '.jpg')
+        out = toimage(out, cmin=0, cmax=255).save(destination + str(count) + '.jpg', 'jpeg')
+        #imsave(destination + str(count) + '.jpg', out)
         if count_proc % 100 == 0:
             print('    Processed: %d/%d' % (count_proc, frames))
     print('    Processed: %d/%d' % (count_proc, frames))
