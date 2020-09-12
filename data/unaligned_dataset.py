@@ -43,20 +43,22 @@ class UnalignedDataset(BaseDataset):
         index_B = random.randint(0, self.B_size - 1)
         B_path = self.B_paths[index_B]
 
-        # print('(A, B) = (%d, %d)' % (index_A, index_B))
-        # TODO: Dimension problem is here!
         A_img = Image.open(A_path).convert('RGB') # A image is a no_input*3 collection of images
-        #A_img = np.array(A_img.getdata()).reshape(A_img.size[0], A_img.size[1], 3)
-        #print(A_img.shape)
         A_img = (self.transformA(A_img))
-        # TODO: I suppose this is for controlling the data size
-        A1 = A_img[:, 0:256, :]
-        A2 = A_img[:, 256:512, :]
+        # I suppose this is for controlling the data size
+        if self.no_input == 1:
+            # Introducing a little redundancy to avoid changing the whole code
+            # In case of a single input, the image is not splitted into two but simply copied
+            A1 = A_img[:, 0:256, :]
+            A2 = A_img[:, 0:256, :]
+        else:
+            A1 = A_img[:, 0:256, :]
+            A2 = A_img[:, 256:512, :]
+
         A1 = A1.unsqueeze(0).numpy()
         A2 = A2.unsqueeze(0).numpy()
         A1 = np.squeeze(A1, axis=0)
         A2 = np.squeeze(A2, axis=0)
-        #print(A1.shape, A2.shape)
         B_img = Image.open(B_path)  # .convert('RGB')
         B = self.transform(B_img)
         if self.opt.which_direction == 'BtoA':

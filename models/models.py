@@ -1,6 +1,6 @@
 def create_model(opt):
     model = None
-    print(opt.model)
+    print('Model: {x}'.format(x=opt.model))
     if opt.model == 'cycle_gan':
         assert (opt.dataset_mode == 'unaligned')
         from .cycle_gan_model import CycleGANModel
