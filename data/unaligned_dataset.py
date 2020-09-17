@@ -50,10 +50,11 @@ class UnalignedDataset(BaseDataset):
             # Introducing a little redundancy to avoid changing the whole code
             # In case of a single input, the image is not splitted into two but simply copied
             # Also, given the dataset, 0:256 is RGB image while 256:512 is the IR image
+            # To test day2nightOrig, it is necessary to set A_img[0] as 1 in the floowing lines
             A1 = A_img[:, 0:256, :]
             A2 = A_img[:, 0:256, :]
         else:
-            A1 = A_img[:, 0:256, :]
+            A1 = A_img[:, 256:512, :]
             A2 = A_img[:, 256:512, :]
 
         A1 = A1.unsqueeze(0).numpy()

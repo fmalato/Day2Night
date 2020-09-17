@@ -10,11 +10,13 @@ import scipy as sp
 import os
 
 
+# Ubuntu
 paths = [x[0] for x in os.walk('/home/federico/Scrivania/KAIST/')]
+# MacOS
 #paths = [x[0] for x in os.walk('/Users/federico/fmalato/KAIST/')]
 # Erasing all leaves
 paths = [x for x in paths if x.endswith(('visible'))]
-night = ['set03', 'set04', 'set05', 'set09', 'set10', 'set11']
+night = ['set05', 'set09']
 destination = 'datasets/Day2Night/trainB/'
 num_path = 1
 count = 0
@@ -29,8 +31,6 @@ for path in paths:
                 files.remove('.DS_Store')
             for f in files:
                 img = imread(path + '/' + f)
-                # Useless, gets resized anyway
-                # img = imresize(img, (128, 160, 3))
                 imsave(destination + '{x}.jpg'.format(x=count), img)
                 count += 1
                 if count+1 % 100 == 0:

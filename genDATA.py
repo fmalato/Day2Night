@@ -18,7 +18,7 @@ paths = [x for x in paths if 'V0' in x]
 # Test
 #paths = ['imgs']
 # Separating folders that contain daily images from the nightly ones
-day = ['set00', 'set01', 'set08']
+day = ['set00', 'set08']
 num_path = 1
 len_paths = len(paths)
 for path in paths:
@@ -45,17 +45,8 @@ for path in paths:
         count_proc += 1
         img_A = imread(j)
         img_B = imread(i)
-        # Useless, get resized anyway
-        """img_A = imresize(img_A, size=(128, 160, 3))
-        img_B = imresize(img_B, size=(128, 160, 3))"""
         line = img_A
-        """out = np.zeros((np.shape(img_B)[0], np.shape(img_B)[1] * 2, 3))
-        out[:, 0:np.shape(img_B)[1], 0] = img_B[:, :, 0]
-        out[:, 0:np.shape(img_B)[1], 1] = img_B[:, :, 1]
-        out[:, 0:np.shape(img_B)[1], 2] = img_B[:, :, 2]
-        out[:, np.shape(img_B)[1]:2 * np.shape(img_B)[1], 0] = line[:, :, 0]
-        out[:, np.shape(img_B)[1]:2 * np.shape(img_B)[1], 1] = line[:, :, 1]
-        out[:, np.shape(img_B)[1]:2 * np.shape(img_B)[1], 2] = line[:, :, 2]"""
+
         out = np.zeros((np.shape(img_B)[0] * 2, np.shape(img_B)[1], 3))
         out[0:np.shape(img_B)[0], :, 0] = img_B[:, :, 0]
         out[0:np.shape(img_B)[0], :, 1] = img_B[:, :, 1]
